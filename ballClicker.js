@@ -72,7 +72,7 @@ for (i=0; i<cantBolas; i++) {
     vivos.push(new Circle(context))
 }
 
-document.addEventListener("touchstart mousedown", function(event) {
+document.addEventListener("touchstart", function(event) {
     shoot(event.clientX, event.clientY)
 });
 
