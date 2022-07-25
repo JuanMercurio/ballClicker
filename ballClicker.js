@@ -1,16 +1,24 @@
+
+
 class Circle {
     constructor(context){
         this.context = context
-        this.r = 80//canvas.height/40
-        this.x =  Math.min(Math.random() * (canvas.width) + this.r*0, canvas.width - this.r*0);
-        this.y =  Math.min(Math.random() * (canvas.height) + this.r*0, canvas.height - this.r*0);
+        this.r = ballSize
+        this.x =  Math.min(Math.random() * (canvas.width) + this.r, canvas.width - this.r);
+        this.y =  Math.min(Math.random() * (canvas.height) + this.r, canvas.height - this.r);
         this.color = "#2FCBE7"
         this.direccion = [Math.random()*(1 - (-1)) + (-1), Math.random()*(1 - (-1)) + (-1)]
+        this.velocidad = velocidad
     }
 
     draw () {
-        this.x += this.direccion[0]
-        this.y += this.direccion[1]
+        this.x += this.direccion[0] * velocidad
+        this.y += this.direccion[1] * velocidad
+        // esto es el borde
+        // this.context.fillStyle = "#181818";
+        // this.context.beginPath();
+        // this.context.arc(this.x, this.y, this.r+2, 0, 2 * Math.PI);
+        // this.context.fill();
         this.context.fillStyle = this.color;
         this.context.beginPath();
         this.context.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
@@ -31,6 +39,7 @@ function shoot(x, y) {
             muertos.push(vivos[i])
             vivos.splice(i, 1)
             vivos.push(new Circle(context))
+            break
         }
     }
 }
@@ -66,7 +75,9 @@ canvas.width = window.innerWidth;
 
 muertos = new Array();
 vivos = new Array();
-cantBolas = 3;
+var ballSize = (canvas.width + canvas.height) / 30;
+var cantBolas = 3;
+var velocidad = 1;
 
 for (i=0; i<cantBolas; i++) {
     vivos.push(new Circle(context))
