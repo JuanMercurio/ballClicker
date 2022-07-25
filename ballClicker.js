@@ -1,7 +1,7 @@
 class Circle {
     constructor(context){
         this.context = context
-        this.r = canvas.height/40
+        this.r = 40//canvas.height/40
         this.x =  Math.min(Math.random() * (canvas.width) + this.r*0, canvas.width - this.r*0);
         this.y =  Math.min(Math.random() * (canvas.height) + this.r*0, canvas.height - this.r*0);
         this.color = "#2FCBE7"
