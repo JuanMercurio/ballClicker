@@ -4,13 +4,13 @@ var Circle = /** @class */ (function () {
         this.r = ballSize;
         this.x = Math.min(randomEntre(canvas.width, this.r), canvas.width - this.r);
         this.y = Math.min(randomEntre(canvas.height, this.r), canvas.height - this.r);
-        this.color = new Color(0, 0, 0, 0.8); //new Color(47, 203, 231, 0.8)
+        this.color = new Color(255, 255, 255, 0.8); //new Color(47, 203, 231, 0.8)
         this.direccion = [randomEntre(-1, 1), randomEntre(-1, 1)];
         this.velocidad = velocidad;
     }
     Circle.prototype.draw = function () {
-        this.x += this.direccion[0] * velocidad;
-        this.y += this.direccion[1] * velocidad;
+        this.x += this.direccion[0] * this.velocidad;
+        this.y += this.direccion[1] * this.velocidad;
         this.context.fillStyle = this.color.toString();
         this.context.beginPath();
         this.context.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
@@ -50,48 +50,68 @@ function randomEntre(min, max) {
     return Math.random() * (max - min) + min;
 }
 function particlesCreate(x, y, color) {
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < particlesCount; i++) {
         var particle = new Circle(context);
         particle.x = x;
         particle.y = y;
         particle.color.random();
-        // particle.r /= 2
+        particle.r /= 10;
         particle.velocidad = randomEntre(5, 7);
         //particle.color.dropOpacity(randomEntre(0.1, 0.9))
         particles.push(particle);
     }
 }
+function specialLive(s, i) {
+    s.draw();
+    s.color.dropOpacity(0.01);
+}
 function particleLive(p, i) {
-    //p.color.dropOpacity(randomEntre(0.01, 0.01))
-    p.color.dropOpacity(0.001);
-    //p.r *= 0.95
     p.draw();
     if (p.color.getOpacity() < 0) {
         particles.splice(i, 1);
     }
-    if (p.velocidad > 20) {
-        p.velocidad *= 0.5;
-    }
-    else {
-        p.velocidad++;
+    p.color.dropOpacity(0.01);
+    p.r *= 0.96;
+    // if (p.velocidad > 6) {
+    //     p.color.dropOpacity(0.012)
+    //     p.r *= 0.96
+    //     p.velocidad *= 0.5
+    // } else {
+    //     p.r *= 0.9
+    //     p.color.dropOpacity(0.02)
+    //     p.velocidad += 2
+    // }
+}
+function specialsCreate(x, y) {
+    for (var i = 0; i < particlesCount; i++) {
+        var special = new Circle(context);
+        special.x = x;
+        special.y = y;
+        special.color.random();
+        special.velocidad = randomEntre(1, 4);
+        specials.push(special);
     }
 }
 function shoot(x, y) {
     for (var i = 0; i < vivos.length; i++) {
-        if (Math.sqrt(Math.pow(x - vivos[i].x, 2) + Math.pow(y - vivos[i].y, 2)) < vivos[i].r) {
-            // muertos.push(vivos[i])
+        var root = Math.sqrt(Math.pow(x - vivos[i].x, 2) + Math.pow(y - vivos[i].y, 2));
+        if (root < vivos[i].r) {
             particlesCreate(x, y, vivos[i].color);
             vivos.splice(i, 1);
             vivos.push(new Circle(context));
+            //(Math.floor(randomEntre(1,15)) == 1)  
+            if (root < vivos[i].r / 4) {
+                console.log('entre en el famoso');
+                specialsCreate(x, y);
+            }
             break;
         }
     }
 }
 function step(timestamp) {
     clearScreen();
-    //    muertos.forEach(shrink)
-    //   muertos = muertos.filter(isDying)
     particles.forEach(particleLive);
+    specials.forEach(specialLive);
     vivos.forEach(live);
     window.requestAnimationFrame(step);
 }
@@ -109,10 +129,10 @@ var canvas = document.getElementById("canvas");
 var context = canvas.getContext('2d');
 canvas.height = window.innerHeight;
 canvas.width = window.innerWidth;
-//let muertos = new Array();
 var vivos = new Array();
+var specials = new Array();
 var particles = new Array();
-var particlesCount = 10;
+var particlesCount = 20;
 var ballSize = (canvas.width + canvas.height) / 30;
 var cantBolas = 3;
 var velocidad = 1;

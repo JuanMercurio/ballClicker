@@ -12,14 +12,14 @@ class Circle {
         this.r = ballSize
         this.x =  Math.min(randomEntre(canvas.width, this.r), canvas.width - this.r)
         this.y =  Math.min(randomEntre(canvas.height, this.r), canvas.height - this.r)
-        this.color = new Color(0, 0, 0, 0.8) //new Color(47, 203, 231, 0.8)
+        this.color = new Color(255, 255, 255, 0.8) //new Color(47, 203, 231, 0.8)
         this.direccion = [randomEntre(-1, 1), randomEntre(-1, 1)]
         this.velocidad = velocidad
     }
 
     draw () {
-        this.x += this.direccion[0] * velocidad
-        this.y += this.direccion[1] * velocidad
+        this.x += this.direccion[0] * this.velocidad
+        this.y += this.direccion[1] * this.velocidad
         this.context.fillStyle = this.color.toString();
         this.context.beginPath();
         this.context.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
@@ -70,12 +70,12 @@ function randomEntre(min:number, max:number) {
 }
 
 function particlesCreate(x: number, y:number, color: Color) {
-    for (let i=0; i<10; i++) {
+    for (let i=0; i<particlesCount; i++) {
         let particle = new Circle(context)
         particle.x = x
         particle.y = y
         particle.color.random()
-        // particle.r /= 2
+        particle.r /= 10
         particle.velocidad = randomEntre(5,7)
         //particle.color.dropOpacity(randomEntre(0.1, 0.9))
         particles.push(particle);
@@ -83,29 +83,55 @@ function particlesCreate(x: number, y:number, color: Color) {
 
 }
 
+function specialLive(s: Circle, i:number) {
+    s.draw();
+    s.color.dropOpacity(0.01)
+}
+
+
 function particleLive( p: Circle, i:number) {
-    //p.color.dropOpacity(randomEntre(0.01, 0.01))
-    p.color.dropOpacity(0.001)
-    //p.r *= 0.95
     p.draw();
     if (p.color.getOpacity() < 0) {
         particles.splice(i, 1)
     }
 
-    if (p.velocidad > 20) {
-        p.velocidad *= 0.5
-    } else {
-        p.velocidad++
+    p.color.dropOpacity(0.01)
+    p.r *= 0.96
+
+    // if (p.velocidad > 6) {
+    //     p.color.dropOpacity(0.012)
+    //     p.r *= 0.96
+    //     p.velocidad *= 0.5
+    // } else {
+    //     p.r *= 0.9
+    //     p.color.dropOpacity(0.02)
+    //     p.velocidad += 2
+    // }
+}
+
+function specialsCreate(x, y) {
+    for (let i=0; i<particlesCount; i++) {
+        let special = new Circle(context)
+        special.x = x
+        special.y = y
+        special.color.random()
+        special.velocidad = randomEntre(1,4)
+        specials.push(special);
     }
 }
 
 function shoot(x, y) {
     for (let i=0; i<vivos.length; i++) {
-        if (Math.sqrt(Math.pow(x - vivos[i].x , 2) + Math.pow(y - vivos[i].y, 2)) < vivos[i].r) {
-            // muertos.push(vivos[i])
+        let root = Math.sqrt(Math.pow(x - vivos[i].x , 2) + Math.pow(y - vivos[i].y, 2))
+        if ( root < vivos[i].r) {
             particlesCreate(x,y, vivos[i].color)
             vivos.splice(i, 1)
             vivos.push(new Circle(context))
+
+            if (root < vivos[i].r/4) {
+                console.log('entre en el famoso')
+                specialsCreate(x, y)
+            }
             break
         }
     }
@@ -114,15 +140,15 @@ function shoot(x, y) {
 function step(timestamp) {
     clearScreen();
 
-//    muertos.forEach(shrink)
- //   muertos = muertos.filter(isDying)
     particles.forEach(particleLive)
+    specials.forEach(specialLive)
     vivos.forEach(live)
+
     
     window.requestAnimationFrame(step);
 }
 
-function shrink(circle) {
+function shrink(circle: Circle) {
     circle.draw()
     circle.r = Math.max(0, circle.r -= 2) 
 }
@@ -135,21 +161,22 @@ function isDying(circle) {
     return circle.r != 0
 }
 
-const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-const context = canvas.getContext('2d');
+const canvas = document.getElementById("canvas") as HTMLCanvasElement
+const context = canvas.getContext('2d')
 
 
-canvas.height = window.innerHeight;
-canvas.width = window.innerWidth;
+canvas.height = window.innerHeight
+canvas.width = window.innerWidth
 
-//let muertos = new Array();
-let vivos = new Array();
-let particles = new Array();
-let particlesCount = 10;
+let vivos = new Array()
 
-const ballSize = (canvas.width + canvas.height) / 30;
-const cantBolas = 3;
-const velocidad = 1;
+let specials = new Array()
+let particles = new Array()
+let particlesCount = 20
+
+const ballSize = (canvas.width + canvas.height) / 30
+const cantBolas = 3
+const velocidad = 1
 
 for (let i=0; i<cantBolas; i++) {
     vivos.push(new Circle(context))
