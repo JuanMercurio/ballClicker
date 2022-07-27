@@ -139,7 +139,7 @@ var velocidad = 1;
 for (var i = 0; i < cantBolas; i++) {
     vivos.push(new Circle(context));
 }
-document.addEventListener("mousedown", function (event) {
+document.addEventListener("pointerdown", function (event) {
     shoot(event.clientX, event.clientY);
 });
 window.requestAnimationFrame(step);
