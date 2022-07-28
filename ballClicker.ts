@@ -70,14 +70,13 @@ function randomEntre(min:number, max:number) {
 }
 
 function particlesCreate(x: number, y:number, color: Color) {
-    for (let i=0; i<particlesCount; i++) {
+    for (let i=0; i<Math.min(streak, 30); i++) {
         let particle = new Circle(context)
         particle.x = x
         particle.y = y
         particle.color.random()
-        particle.r /= 10
-        particle.velocidad = randomEntre(5,7)
-        //particle.color.dropOpacity(randomEntre(0.1, 0.9))
+        particle.r = 7 
+        particle.velocidad = randomEntre(2, 3)
         particles.push(particle);
     }
 
@@ -95,55 +94,56 @@ function particleLive( p: Circle, i:number) {
         particles.splice(i, 1)
     }
 
-    p.color.dropOpacity(0.01)
+    p.color.dropOpacity((1/(p.r+1)) * 0.01)
     p.r *= 0.96
-
-    // if (p.velocidad > 6) {
-    //     p.color.dropOpacity(0.012)
-    //     p.r *= 0.96
-    //     p.velocidad *= 0.5
-    // } else {
-    //     p.r *= 0.9
-    //     p.color.dropOpacity(0.02)
-    //     p.velocidad += 2
-    // }
 }
 
-function specialsCreate(x, y) {
-    for (let i=0; i<particlesCount; i++) {
-        let special = new Circle(context)
-        special.x = x
-        special.y = y
-        special.color.random()
-        special.velocidad = randomEntre(1,4)
-        specials.push(special);
+function festejo(x:number, y:number) {
+    for (let i=0; i<50; i++) {
+        let particula = new Circle(context)
+        particula.color = new Color(255,215,0,1)
+        particula.x = x
+        particula.y = y
+        particula.r = 5
+        particula.velocidad = randomEntre(10,15)
+        particles.push(particula)
     }
+
 }
 
 function shoot(x, y) {
     for (let i=0; i<vivos.length; i++) {
         let root = Math.sqrt(Math.pow(x - vivos[i].x , 2) + Math.pow(y - vivos[i].y, 2))
-        if ( root < vivos[i].r) {
-            particlesCreate(x,y, vivos[i].color)
+        if ( root <= vivos[i].r) {
+            streak += 1
+            time = 50 
+            console.log(streak)
+            if (streak == 27) {
+                festejo(vivos[i].x, vivos[i].y)
+            } else {
+                particlesCreate(x,y, vivos[i].color)
+            }
             vivos.splice(i, 1)
             vivos.push(new Circle(context))
-
-            if (root < vivos[i].r/4) {
-                console.log('entre en el famoso')
-                specialsCreate(x, y)
-            }
-            break
+            return 
         }
     }
+    // console.log("le pifiesta perro")
+    streak = 0
+
 }
 
 function step(timestamp) {
     clearScreen();
 
     particles.forEach(particleLive)
-    specials.forEach(specialLive)
+    // specials.forEach(specialLive)
     vivos.forEach(live)
 
+    time -= 1
+    if (time < 0) {
+        streak = 0
+    }
     
     window.requestAnimationFrame(step);
 }
@@ -154,11 +154,19 @@ function shrink(circle: Circle) {
 }
 
 function live(circle) {
+    if (Math.floor(circle.x - circle.r) < 0 || Math.floor(circle.x + circle.r)  > canvas.width) {
+        circle.direccion[0] = circle.direccion[0]*-1
+    }
+    
+    if (Math.floor(circle.y - circle.r) < 0 || Math.floor(circle.y + circle.r)  > canvas.height) {
+        circle.direccion[1] = circle.direccion[1]*-1
+    }
+
     circle.draw()
 }
 
 function isDying(circle) {
-    return circle.r != 0
+    return circle.r > 0
 }
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement
@@ -173,10 +181,12 @@ let vivos = new Array()
 let specials = new Array()
 let particles = new Array()
 let particlesCount = 20
+let streak = 0
+let time = 30
 
 const ballSize = (canvas.width + canvas.height) / 30
 const cantBolas = 3
-const velocidad = 1
+const velocidad = 2
 
 for (let i=0; i<cantBolas; i++) {
     vivos.push(new Circle(context))
