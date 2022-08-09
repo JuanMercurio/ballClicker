@@ -9,12 +9,12 @@ class Circle {
 
     constructor(context){
         this.context = context
-        this.r = ballSize
+        this.r = TARGET_SIZE
         this.x =  Math.min(randomEntre(canvas.width, this.r), canvas.width - this.r)
         this.y =  Math.min(randomEntre(canvas.height, this.r), canvas.height - this.r)
         this.color = new Color(255, 255, 255, 0.8) //new Color(47, 203, 231, 0.8)
         this.direccion = [randomEntre(-1, 1), randomEntre(-1, 1)]
-        this.velocidad = velocidad
+        this.velocidad = TARGET_VELOCITY
     }
 
     draw () {
@@ -28,7 +28,7 @@ class Circle {
 };
 
 
-function clearScreen () {
+function clearScreen (context) {
     context.fillStyle = "#181818";
     context.fillRect(0, 0, canvas.width, canvas.height);
 }
@@ -71,7 +71,7 @@ function randomEntre(min:number, max:number) {
 
 function particlesCreate(x: number, y:number, color: Color) {
     for (let i=0; i<Math.min(streak, 30); i++) {
-        let particle = new Circle(context)
+        let particle = new Circle(CONTEXT)
         particle.x = x
         particle.y = y
         particle.color.random()
@@ -88,7 +88,7 @@ function specialLive(s: Circle, i:number) {
 }
 
 
-function particleLive( p: Circle, i:number) {
+function drawParticle( p: Circle, i:number) {
     p.draw();
     if (p.color.getOpacity() < 0) {
         particles.splice(i, 1)
@@ -100,7 +100,7 @@ function particleLive( p: Circle, i:number) {
 
 function festejo(x:number, y:number) {
     for (let i=0; i<50; i++) {
-        let particula = new Circle(context)
+        let particula = new Circle(CONTEXT)
         particula.color = new Color(255,215,0,1)
         particula.x = x
         particula.y = y
@@ -112,90 +112,94 @@ function festejo(x:number, y:number) {
 }
 
 function shoot(x, y) {
+
     for (let i=0; i<vivos.length; i++) {
         let root = Math.sqrt(Math.pow(x - vivos[i].x , 2) + Math.pow(y - vivos[i].y, 2))
         if ( root <= vivos[i].r) {
+
             streak += 1
-            time = 50 
-            console.log(streak)
-            if (streak == 27) {
+            shootWindow = SHOOT_WINDOW
+
+            if (streak === 27) {
                 festejo(vivos[i].x, vivos[i].y)
             } else {
                 particlesCreate(x,y, vivos[i].color)
             }
+
             vivos.splice(i, 1)
-            vivos.push(new Circle(context))
+            vivos.push(new Circle(CONTEXT))
             return 
         }
     }
-    // console.log("le pifiesta perro")
-    streak = 0
 
+    streak = 0
 }
 
-function step(timestamp) {
-    clearScreen();
-
-    particles.forEach(particleLive)
-    // specials.forEach(specialLive)
-    vivos.forEach(live)
-
-    time -= 1
-    if (time < 0) {
+function isPlayerTooSlow() {
+    shootWindow -= 1
+    if (shootWindow < 0) {
         streak = 0
     }
-    
-    window.requestAnimationFrame(step);
 }
 
-function shrink(circle: Circle) {
-    circle.draw()
-    circle.r = Math.max(0, circle.r -= 2) 
+function frame() {
+    clearScreen(CONTEXT);
+
+    particles.forEach(drawParticle)
+    vivos.forEach(drawTarget)
+
+    isPlayerTooSlow()
+    
+    window.requestAnimationFrame(frame);
 }
 
-function live(circle) {
-    if (Math.floor(circle.x - circle.r) < 0 || Math.floor(circle.x + circle.r)  > canvas.width) {
-        circle.direccion[0] = circle.direccion[0]*-1
+function drawTarget(target: Circle) {
+    if (Math.floor(target.x - target.r) < 0 || Math.floor(target.x + target.r)  > canvas.width) {
+        target.direccion[0] = target.direccion[0]*-1
     }
     
-    if (Math.floor(circle.y - circle.r) < 0 || Math.floor(circle.y + circle.r)  > canvas.height) {
-        circle.direccion[1] = circle.direccion[1]*-1
+    if (Math.floor(target.y - target.r) < 0 || Math.floor(target.y + target.r)  > canvas.height) {
+        target.direccion[1] = target.direccion[1]*-1
     }
 
-    circle.draw()
+    target.draw()
 }
 
 function isDying(circle) {
     return circle.r > 0
 }
 
-const canvas = document.getElementById("canvas") as HTMLCanvasElement
-const context = canvas.getContext('2d')
 
+function initBalls() {
+    for (let i=0; i<TARGET_COUNT; i++) {
+        vivos.push(new Circle(CONTEXT))
+    }
+}
+
+const canvas = document.getElementById("canvas") as HTMLCanvasElement
+const CONTEXT = canvas.getContext('2d')
 
 canvas.height = window.innerHeight
 canvas.width = window.innerWidth
 
-let vivos = new Array()
+const TARGET_SIZE = (canvas.width + canvas.height) / 30
+const TARGET_COUNT = 3
+const TARGET_VELOCITY = 2
+const SHOOT_WINDOW = 50
 
-let specials = new Array()
-let particles = new Array()
+let vivos = []
+let specials = []
+let particles = []
 let particlesCount = 20
 let streak = 0
-let time = 30
+let shootWindow = SHOOT_WINDOW
 
-const ballSize = (canvas.width + canvas.height) / 30
-const cantBolas = 3
-const velocidad = 2
+initBalls()
 
-for (let i=0; i<cantBolas; i++) {
-    vivos.push(new Circle(context))
-}
-
-document.addEventListener("mousedown", function(event) {
+document.addEventListener("pointerdown", function(event) {
     shoot(event.clientX, event.clientY)
 });
 
-window.requestAnimationFrame(step)
+window.requestAnimationFrame(frame)
 
 

@@ -1,12 +1,12 @@
 var Circle = /** @class */ (function () {
     function Circle(context) {
         this.context = context;
-        this.r = ballSize;
+        this.r = TARGET_SIZE;
         this.x = Math.min(randomEntre(canvas.width, this.r), canvas.width - this.r);
         this.y = Math.min(randomEntre(canvas.height, this.r), canvas.height - this.r);
         this.color = new Color(255, 255, 255, 0.8); //new Color(47, 203, 231, 0.8)
         this.direccion = [randomEntre(-1, 1), randomEntre(-1, 1)];
-        this.velocidad = velocidad;
+        this.velocidad = TARGET_VELOCITY;
     }
     Circle.prototype.draw = function () {
         this.x += this.direccion[0] * this.velocidad;
@@ -19,7 +19,7 @@ var Circle = /** @class */ (function () {
     return Circle;
 }());
 ;
-function clearScreen() {
+function clearScreen(context) {
     context.fillStyle = "#181818";
     context.fillRect(0, 0, canvas.width, canvas.height);
 }
@@ -51,7 +51,7 @@ function randomEntre(min, max) {
 }
 function particlesCreate(x, y, color) {
     for (var i = 0; i < Math.min(streak, 30); i++) {
-        var particle = new Circle(context);
+        var particle = new Circle(CONTEXT);
         particle.x = x;
         particle.y = y;
         particle.color.random();
@@ -64,7 +64,7 @@ function specialLive(s, i) {
     s.draw();
     s.color.dropOpacity(0.01);
 }
-function particleLive(p, i) {
+function drawParticle(p, i) {
     p.draw();
     if (p.color.getOpacity() < 0) {
         particles.splice(i, 1);
@@ -74,7 +74,7 @@ function particleLive(p, i) {
 }
 function festejo(x, y) {
     for (var i = 0; i < 50; i++) {
-        var particula = new Circle(context);
+        var particula = new Circle(CONTEXT);
         particula.color = new Color(255, 215, 0, 1);
         particula.x = x;
         particula.y = y;
@@ -88,66 +88,66 @@ function shoot(x, y) {
         var root = Math.sqrt(Math.pow(x - vivos[i].x, 2) + Math.pow(y - vivos[i].y, 2));
         if (root <= vivos[i].r) {
             streak += 1;
-            time = 50;
-            console.log(streak);
-            if (streak == 27) {
+            shootWindow = SHOOT_WINDOW;
+            if (streak === 27) {
                 festejo(vivos[i].x, vivos[i].y);
             }
             else {
                 particlesCreate(x, y, vivos[i].color);
             }
             vivos.splice(i, 1);
-            vivos.push(new Circle(context));
+            vivos.push(new Circle(CONTEXT));
             return;
         }
     }
-    // console.log("le pifiesta perro")
     streak = 0;
 }
-function step(timestamp) {
-    clearScreen();
-    particles.forEach(particleLive);
-    // specials.forEach(specialLive)
-    vivos.forEach(live);
-    time -= 1;
-    if (time < 0) {
+function isPlayerTooSlow() {
+    shootWindow -= 1;
+    if (shootWindow < 0) {
         streak = 0;
     }
-    window.requestAnimationFrame(step);
 }
-function shrink(circle) {
-    circle.draw();
-    circle.r = Math.max(0, circle.r -= 2);
+function frame() {
+    clearScreen(CONTEXT);
+    particles.forEach(drawParticle);
+    vivos.forEach(drawTarget);
+    isPlayerTooSlow();
+    window.requestAnimationFrame(frame);
 }
-function live(circle) {
-    if (Math.floor(circle.x - circle.r) < 0 || Math.floor(circle.x + circle.r) > canvas.width) {
-        circle.direccion[0] = circle.direccion[0] * -1;
+function drawTarget(target) {
+    if (Math.floor(target.x - target.r) < 0 || Math.floor(target.x + target.r) > canvas.width) {
+        target.direccion[0] = target.direccion[0] * -1;
     }
-    if (Math.floor(circle.y - circle.r) < 0 || Math.floor(circle.y + circle.r) > canvas.height) {
-        circle.direccion[1] = circle.direccion[1] * -1;
+    if (Math.floor(target.y - target.r) < 0 || Math.floor(target.y + target.r) > canvas.height) {
+        target.direccion[1] = target.direccion[1] * -1;
     }
-    circle.draw();
+    target.draw();
 }
 function isDying(circle) {
     return circle.r > 0;
 }
+function initBalls() {
+    for (var i = 0; i < TARGET_COUNT; i++) {
+        vivos.push(new Circle(CONTEXT));
+    }
+}
 var canvas = document.getElementById("canvas");
-var context = canvas.getContext('2d');
+var CONTEXT = canvas.getContext('2d');
 canvas.height = window.innerHeight;
 canvas.width = window.innerWidth;
-var vivos = new Array();
-var specials = new Array();
-var particles = new Array();
+var TARGET_SIZE = (canvas.width + canvas.height) / 30;
+var TARGET_COUNT = 3;
+var TARGET_VELOCITY = 2;
+var SHOOT_WINDOW = 50;
+var vivos = [];
+var specials = [];
+var particles = [];
 var particlesCount = 20;
 var streak = 0;
-var time = 30;
-var ballSize = (canvas.width + canvas.height) / 30;
-var cantBolas = 3;
-var velocidad = 2;
-for (var i = 0; i < cantBolas; i++) {
-    vivos.push(new Circle(context));
-}
-document.addEventListener("mousedown", function (event) {
+var shootWindow = SHOOT_WINDOW;
+initBalls();
+document.addEventListener("pointerdown", function (event) {
     shoot(event.clientX, event.clientY);
 });
-window.requestAnimationFrame(step);
+window.requestAnimationFrame(frame);
